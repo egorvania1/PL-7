@@ -1,5 +1,7 @@
 ﻿//Вариант 3
 using System;
+using System.Collections.Generic;
+using System.Net.NetworkInformation;
 using System.Transactions;
 using static System.Formats.Asn1.AsnWriter;
 
@@ -14,13 +16,14 @@ namespace lab7
             //не нарушая его упорядоченности.
             Console.WriteLine("Задание 1");
             Console.WriteLine("Даны упорядоченные списки L1 и L2. Вставить элементы списка L2 в список L1, не нарушая его упорядоченности.");
-            List<string> list1 = new List<string>() { "one", "two" };
-            List<string> list2 = new List<string>() { "three", "four" };
-            list2.AddRange(list1);
-            foreach (var thing in list2)
-            {
-                Console.WriteLine(thing);
-            }
+            List<object> L1 = new List<object>() { "one", "two", false, 3, 4.5, 'a', "rm" }; //список L1
+            List<object> L2 = new List<object>() { "three", "four", 'a', true, 4.5, 40 }; //спискок L2
+
+            Console.WriteLine("Список 1: " + String.Join(", ", L1));
+            Console.WriteLine("Список 2: " + String.Join(", ", L2));
+
+            L1.AddRange(L2); //Вставляем в конец список L1 элементы списка L2
+            Console.WriteLine("Итоговый лист: " + String.Join(", ", L1));
         }
         public static void Task2() //Задание 2
         {
@@ -28,21 +31,23 @@ namespace lab7
             //Программа подсчитывает количество элементов списка L, у которых равные «соседи»;
             Console.WriteLine("Задание 2.");
             Console.WriteLine("Программа подсчитывает количество элементов списка L, у которых равные «соседи».");
-            LinkedList<string> words = new LinkedList<string>(new[] { "one", "two", "one", "three" });
-            var currentNode = words.First;
-            int count = 0;
-            while (currentNode != null)
+            object[] things = { true, "two", true, "three", 2, false, 2.0M, 'd', "something", 'd' }; //Массив из разных объектов
+            LinkedList<object> words = new LinkedList<object>(things); //Объявление списка
+            var currentNode = words.First; //Текущий элемент
+            int count = 0;  //Кол-во элементов у которых равные «соседи»
+            while (currentNode != null) //Пока не дошли до конца
             {
-                var prev = currentNode.Previous;
-                var next = currentNode.Next;
-                Console.WriteLine(currentNode.Value);
-                if (prev != null && next != null && (prev.Value == next.Value))
+                var prev = currentNode.Previous; //"Левый" сосед
+                var next = currentNode.Next;    //"Правый" сосед
+                Console.Write(currentNode.Value.ToString() + " ");
+                if (prev != null && next != null && Equals(prev.Value, next.Value)) //Если "соседи" существуют и равны
                 {
                     count++;
                 }
-                currentNode = currentNode.Next;
+                currentNode = currentNode.Next; //Переходим к следующему элементу
             }
-            Console.WriteLine(count);
+            Console.Write("\n");
+            Console.WriteLine("Количество элементов списка, у которых равные «соседи»: " + count); //Вывод результата
         }
         public static void Task3() //Задание 3
         {
@@ -54,11 +59,31 @@ namespace lab7
             Console.WriteLine("Задан некоторый набор блюд в кафе. Определить для каждого из блюд, какие " +
                 "из них заказывали все посетители, какие — некоторые из посетителей, и какие " +
                 "не заказывал никто.");
-            HashSet<string> food = new HashSet<string>() { "potato", "cake" }; //Все блюда в кафе
-            HashSet<string> vis1 = new HashSet<string>() { "potato", "cake" }; //Заказал первый посетитель
-            HashSet<string> vis2 = new HashSet<string>() { "potato", "cake" }; //Заказал второй посетитель
-            HashSet<string> vis3 = new HashSet<string>() { "potato", "cake" }; //Заказал третий посетитель 
-            HashSet<string> vis4 = new HashSet<string>() { "potato", "cake" }; //Заказал четвёртый посетитель
+            HashSet<string> allFood = new HashSet<string>() { "Пюре", "Торт", "Салат", "Макароны", "Котлета", "Каша", "Хлеб" }; //Все блюда в кафе
+            HashSet<string> vis1 = new HashSet<string>() { "Пюре", "Котлета" };         //Заказал первый посетитель
+            HashSet<string> vis2 = new HashSet<string>() { "Пюре", "Котлета", "Хлеб" }; //Заказал второй посетитель
+            HashSet<string> vis3 = new HashSet<string>() { "Макароны", "Котлета" };     //Заказал третий посетитель 
+            HashSet<string> vis4 = new HashSet<string>() { "Котлета" };                   //Заказал четвёртый посетитель
+            HashSet<string>[] allVis = { vis1, vis2, vis3, vis4 };
+            Console.WriteLine("Меню кафе: " + String.Join(", ", allFood));
+            for (int i = 0; i < allVis.Length; i++)
+            {
+                Console.WriteLine("Посетитель " + (i + 1) + " заказал: " + String.Join(", ", allVis[i]));
+            }
+            HashSet<string> orderAll = new HashSet<string>(allFood);
+            HashSet<string> orderSome = new HashSet<string>();
+            HashSet<string> orderNone = new HashSet<string>(allFood);
+            foreach (HashSet<string> visitor in allVis)
+            {
+                orderAll.IntersectWith(visitor); //Оставить в orderAll только те блюда, которые встречаются в каждом HashSet посетителя
+                orderSome.UnionWith(visitor);    //Добавить в orderSome все блюда, которые заказывал посетитель
+            }
+            orderSome.ExceptWith(orderAll); //Убрать те блюда, которые заказывали все\
+            orderNone.ExceptWith(orderAll);
+            orderNone.ExceptWith(orderSome);//Убрать те блюда, которые вообще заказывали
+            Console.WriteLine("Заказали все: " + String.Join(", ", orderAll));
+            Console.WriteLine("Заказали некоторые: " + String.Join(", ", orderSome));
+            Console.WriteLine("Никто не заказывал: " + String.Join(", ", orderNone));
         }
         public static void Task4() //Задание 4
         {
@@ -75,7 +100,7 @@ namespace lab7
             string s;
             string[] words;
             StreamReader inputFile;
-            string inputPath = ".\\text.txt";           //Файл ввода
+            string inputPath = ".\\text.txt"; //Файл ввода
             //Открываем файл ввода
             try
             {
@@ -86,8 +111,11 @@ namespace lab7
                 Console.WriteLine(e.Message);
                 return;
             }
+            Console.WriteLine("Изначальный файл:");
             while ((s = inputFile.ReadLine()) != null) //Читаем строки
             {
+                Console.WriteLine(s);
+                s = s.ToUpper(); //чтобы не пришлось разбираться с прописными буквами, делаем все буквы заглавными
                 words = s.Split(' '); //Разделяем строку на массив слов через пробелы
                 foreach (string word in words)  //Каждое слово в массиве слов
                 {
@@ -108,13 +136,17 @@ namespace lab7
                     }
                     isInOneWord = false;    //Слово меняется на другое
                 }
-                Console.WriteLine(s);
             }
             inOneWord.ExceptWith(inMultipleWords); //Убираем согласные, которые встречались в нескольких словах
-            foreach (char ch in inOneWord)
+            Console.WriteLine("Согласные буквы, которые входят ровно в одно слово:");
+            foreach (char ch in consonants)
             {
-                Console.Write(ch + " ");
-            }    
+                if (inOneWord.Contains(ch))
+                {
+                    Console.Write(ch + " ");
+                }
+            }
+            Console.Write("\n");
             inputFile.Close();
         }
         public static void Task5() //Задание 5
@@ -153,6 +185,7 @@ namespace lab7
 
             //Пока пользователь не введёт правильное число N
             bool isValid = false;
+            bool isFailed = false;
             while (!isValid) 
             {
                 try
@@ -213,14 +246,21 @@ namespace lab7
                             if (score > 10 || score < 0) //Если введён неверный балл
                             {
                                 Console.WriteLine("Баллы только от 0 до 10!");
-                                continue;
+                                isFailed = true;
+                                break;
                             }
                         }
                         else //Если баллы НЕ являются целым числом
                         {
                             Console.WriteLine("Баллы участника не являются целыми числами!");
-                            continue;
+                            isFailed = true;
+                            break;
                         }
+                    }
+                    if (isFailed)
+                    {
+                        isFailed = false;
+                        continue;
                     }
                     if (contestants.TryAdd(creds, contScore)) //Пытаемся добавить участника в словарь
                     {
